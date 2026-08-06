@@ -7,7 +7,6 @@ Utilizes yt-dlp and FFmpeg for conversion and token-based access management.
 
 import secrets
 import threading
-import os
 from flask import Flask, request, jsonify, send_from_directory
 from uuid import uuid4
 from pathlib import Path
@@ -104,15 +103,18 @@ def _generate_token_response(filename: str):
     return jsonify(token=token)
 
 
-# Start the background token cleaner thread at import time
-# (needed for both local runs and Gunicorn deployments)
-token_cleaner_thread = threading.Thread(
-    target=access_manager.manage_tokens,
-    daemon=True
-)
-token_cleaner_thread.start()
+def main():
+    """
+    Starts the background thread for automatic token cleanup
+    and launches the Flask development server.
+    """
+    token_cleaner_thread = threading.Thread(
+        target=access_manager.manage_tokens,
+        daemon=True
+    )
+    token_cleaner_thread.start()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    main()
